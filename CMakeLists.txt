@@ -11,6 +11,9 @@ set(ROM_WRAP_SOURCE_FILES "")
 list(
         APPEND ROM_WRAP_SOURCE_FILES
         src/binary_file.cpp
+        src/rom.cpp
+        src/libstr.cpp
+        src/address.cpp
 )
 
 option(ROM_WRAP_BUILD_DLL "Build Binary File as a dynamic library" ON)

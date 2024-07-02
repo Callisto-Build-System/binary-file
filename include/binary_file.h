@@ -5,7 +5,6 @@
 #include <utility>
 #include <optional>
 #include <vector>
-#include <optional>
 #include <fstream>
 
 #include "fmt/format.h"
