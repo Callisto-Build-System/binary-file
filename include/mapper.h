@@ -3,7 +3,6 @@
 
 namespace binary_file {
 	enum class Mapper {
-		INVALID,
 		LO_ROM,
 		HI_ROM,
 		SA1_ROM,

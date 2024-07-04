@@ -8,6 +8,7 @@
 #include <fstream>
 
 #include "fmt/format.h"
+#include "exception.h"
 
 namespace fs = std::filesystem;
 
@@ -15,11 +16,6 @@ namespace binary_file {
     using byte = uint8_t;
     using _2bytes = uint16_t;
     using _4bytes = uint32_t;
-
-    class BinaryFileException : public std::runtime_error {
-    public:
-        using std::runtime_error::runtime_error;
-    };
 
     class BinaryFile {
     protected:

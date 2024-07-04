@@ -1,6 +1,42 @@
 #include "../include/rom.h"
 
 namespace binary_file {
+	Rom::Rom(const fs::path& path) : BinaryFile(path) {}
+	Rom::Rom(const fs::path& path, Mapper mapper) : BinaryFile(path), mapper(mapper) {}
+
+	Rom::Rom(std::vector<byte>&& bytes) : BinaryFile(std::move(bytes)) {}
+	Rom::Rom(std::vector<byte>&& bytes, Mapper mapper) : BinaryFile(std::move(bytes)), mapper(mapper) {}
+
+	void Rom::ensureMapper() {
+		if (!mapper.has_value()) {
+			deriveMapper();
+		}
+	}
+
+	Address Rom::pc(size_t pc_address) {
+		ensureMapper();
+
+		return Address::PC(pc_address, mapper.value());
+	}
+
+	Address Rom::snes(size_t snes_address) {
+		ensureMapper();
+
+		return Address::SNES(snes_address, mapper.value());
+	}
+
+	std::vector<byte> Rom::getBytes() {
+		return bytes;
+	}
+
+	std::optional<Mapper> Rom::getMapper() const {
+		return mapper;
+	}
+
+	void Rom::setMapper(Mapper mapper) {
+		this->mapper = mapper;
+	}
+
 	void Rom::deriveMapper() {
 		int max_score{ -99999 };
 
@@ -77,7 +113,93 @@ namespace binary_file {
 		}
 	}
 
-	byte Rom::read1(Address&& address) {
-		return BinaryFile::read1(address.pc());
+	byte Rom::read1(Address&& address) const {
+		try {
+			return BinaryFile::read1(address.pc());
+		} catch (const BinaryFileException&) {
+			throw BinaryFileException(fmt::format(
+				"Invalid read of one byte at {}",
+				address.string()
+			));
+		}
+	}
+
+	// these reads might be slow, but they should make sure bank crossing is handled right
+	_2bytes Rom::read2(Address&& address) const {
+		auto second{ address + 1 };
+
+		return BinaryFile::join({
+			read1(std::forward<Address>(address)),
+			read1(std::move(second))
+		});
+	}
+
+	_4bytes Rom::read3(Address&& address) const {
+		auto second{ address + 1 };
+		auto third{ address + 2 };
+
+		return BinaryFile::join({
+			read1(std::forward<Address>(address)),
+			read1(std::move(second)),
+			read1(std::move(third))
+		});
+	}
+
+	_4bytes Rom::read4(Address&& address) const {
+		auto second{ address + 1 };
+		auto third{ address + 2 };
+		auto fourth{ address + 3 };
+
+		return BinaryFile::join({
+			read1(std::forward<Address>(address)),
+			read1(std::move(second)),
+			read1(std::move(third)),
+			read1(std::move(fourth))
+		});
+	}
+
+	void Rom::write1(Address&& address, byte byte_to_write) {
+		try {
+			return BinaryFile::write1(address.pc(), byte_to_write);
+		}
+		catch (const BinaryFileException&) {
+			throw BinaryFileException(fmt::format(
+				"Invalid write of one byte 0x{:02X} at {}",
+				byte_to_write, address.string()
+			));
+		}
+	}
+
+	void Rom::write2(Address&& address, _2bytes bytes_to_write) {
+		const auto split{ BinaryFile::split(bytes_to_write, 2) };
+
+		auto second{ address + 1 };
+
+		write1(std::forward<Address>(address), split[0]);
+		write1(std::move(second), split[1]);
+	}
+
+	void Rom::write3(Address&& address, _4bytes bytes_to_write) {
+		const auto split{ BinaryFile::split(bytes_to_write, 3) };
+
+		auto second{ address + 1 };
+		auto third{ address + 2 };
+
+		write1(std::forward<Address>(address), split[0]);
+		write1(std::move(second), split[1]);
+		write1(std::move(third), split[2]);
+	}
+
+	void Rom::write4(Address&& address, _4bytes bytes_to_write) {
+		const auto split{ BinaryFile::split(bytes_to_write, 4) };
+
+		auto second{ address + 1 };
+		auto third{ address + 2 };
+		auto fourth{ address + 3 };
+
+		write1(std::forward<Address>(address), split[0]);
+		write1(std::move(second), split[1]);
+		write1(std::move(third), split[2]);
+		write1(std::move(fourth), split[3]);
 	}
 }

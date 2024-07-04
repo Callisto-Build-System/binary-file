@@ -27,12 +27,10 @@ FetchContent_MakeAvailable(fmt)
 
 if (ROM_WRAP_BUILD_LIB)
     add_library(${PROJECT_NAME}_static STATIC ${ROM_WRAP_SOURCE_FILES})
-    target_link_libraries(${PROJECT_NAME}_static PRIVATE fmt::fmt)
 endif()
 
 if (ROM_WRAP_BUILD_DLL)
     add_library(${PROJECT_NAME} SHARED ${ROM_WRAP_SOURCE_FILES})
-    target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
 endif()
 
 target_include_directories(${PROJECT_NAME}_static
@@ -48,3 +46,6 @@ target_include_directories(${PROJECT_NAME}
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
+
+target_link_libraries(${PROJECT_NAME}_static PUBLIC fmt::fmt)
+target_link_libraries(${PROJECT_NAME} PUBLIC fmt::fmt)
